@@ -1,34 +1,64 @@
-const express = require('express')
 const Account = require('./accounts-model')
+const db = require('../../data/db-config')
 
 exports.checkAccountPayload = (req, res, next) => {
   // DO YOUR MAGIC
-  const {name, budget} = req.body
-  if(name && budget) {
-    next()
+  //Solution, Tidying Up Errors, !ORDER MATTERS, AVOID GENERAL ERROR (if early error)!
+  const error = { status: 400 }
+  const { name, budget } = req.body
+  if( name === undefined || budget === undefined ) {
+    error.message = 'name and budget are required'
+    next(error)
   } else if(typeof name !== 'string') {
     res.status(400).json({ message: 'name of account must be a string'})
-  } else if(name.trim() < 3 || name.trim() > 100) {
+  } else if(name.trim().length < 3 || name.trim().length > 100) {
     res.status(400).json({ message: 'name of account must be between 3 and 100'})
-  } else if(typeof budget !== 'number' ) {
+  } else if(typeof budget !== 'number' || isNaN(budget)) {
     res.status(400).json({ message: 'budget of account must be a number'})
   } else if(budget < 0 || budget > 1000000) {
     res.status(400).json({ message: 'budget of account is too large or too small'})
+  } 
+
+  if (error.message) {
+    next(error)
   } else {
-    res.status(400).json({ message: 'name and budget are required'})
+    next()
   }
+            // const {name, budget} = req.body
+            // if(name && budget) {
+            //   next()
+            // } else if(typeof name !== 'string') {
+            //   res.status(400).json({ message: 'name of account must be a string'})
+            // } else if(name.trim() < 3 || name.trim() > 100) {
+            //   res.status(400).json({ message: 'name of account must be between 3 and 100'})
+            // } else if(typeof budget !== 'number' ) {
+            //   res.status(400).json({ message: 'budget of account must be a number'})
+            // } else if(budget < 0 || budget > 1000000) {
+            //   res.status(400).json({ message: 'budget of account is too large or too small'})
+            // } else {
+            //   res.status(400).json({ message: 'name and budget are required'})
+            // }
 }
 
-exports.checkAccountNameUnique = async function checkAccountNameUnique (req, res, next) {
+
+exports.checkAccountNameUnique = async (req, res, next) => {
   // DO YOUR MAGIC
   try {
-    const untakenName = UntakenName.getById(req.params.id)
-    if(!untakenName.trim()) {
-      req.untakenName = untakenName
-      next()
+    const takenName = await db('accounts')
+      .where('name', req.body.name.trim())
+      .first()
+    if (takenName) {
+      next( { status: 400, message: 'that name is taken '})
     } else {
-      res.status(400).json({ message: 'that name is taken'})
+      next()
     }
+          // const untakenName = UntakenName.getById(req.params.id)
+          // if(!untakenName.trim()) {
+          //   req.untakenName = untakenName
+          //   next()
+          // } else {
+          //   res.status(400).json({ message: 'that name is taken'})
+          // }
   } catch (err) {
     next(err)
   }
@@ -38,12 +68,11 @@ exports.checkAccountId = async function checkAccountId(req, res, next) {
   // DO YOUR MAGIC
   try {
     const account = await Account.getById(req.params.id)
-    if(account) {
-      req.account = account
-      next()
+    if(!account) {
+      next({ status: 404, message: 'account not found'})
     } else {
-      res.status(404).json({ message: 'account not found'})
-    }
+      req.account = account
+      next()    }
   } catch (err) {
     next(err)
   }

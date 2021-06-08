@@ -8,14 +8,19 @@ const getAll = () => {
 async function getById(id) {
   // DO YOUR MAGIC
   const result = await db('accounts')
-    .where('id', id).first()
+    .where('id', id).first() //First brings individual rather than collection
   return result
 }
+  //Alternative:
+  // const getById = id => {
+  //   // DO YOUR MAGIC
+  //   return db('accounts').where('id', id).first() //First brings individual rather than collection
+  // }
 
-async function create({name, budget}) {
+const create = async account => {
   // DO YOUR MAGIC
   const [id] = await db('accounts')
-    .insert({name, budget})
+    .insert(account)
   return getById(id)
 }
 
@@ -35,6 +40,10 @@ async function deleteById(id) {
     .del()
   return toDelete
 }
+  //Alternative:
+  // const deleteById = id => {
+  //   return db('accounts').where('id', id).del()
+  // }
 
 module.exports = {
   getAll,
