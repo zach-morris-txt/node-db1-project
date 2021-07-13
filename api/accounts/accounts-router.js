@@ -1,9 +1,9 @@
-const express = require('express')
+const express = require('express');
 
-const Account = require('./accounts-model')
-const router = require('express').Router()
+const Account = require('./accounts-model');
+const router = express.Router();
 
-const md = require('./accounts-middleware')
+const md = require('./accounts-middleware.js');
 
 
 router.get('/', async (req, res, next) => {
